@@ -1,5 +1,7 @@
 # Quiver2API
 
+[简体中文](README.zh-CN.md)
+
 Local account-pool proxy for QuiverAI.
 
 ## What Was Reversed
