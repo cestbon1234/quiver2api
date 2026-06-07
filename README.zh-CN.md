@@ -372,12 +372,4 @@ http://localhost:3000/quiver2api-export.user.js
 
 ## 开源和安全
 
-开源前请确认：
-
-- 不提交 `.env`。
-- 不提交 `accounts.db`。
-- 不提交 `logs/`。
-- 不提交截图、临时扫描目录或浏览器导出的 Cookie。
-- `.env.example` 里只放占位符。
-
 本项目仅供学习与研究使用。使用者必须遵守 Quiver AI 的服务条款、额度规则、适用法律法规和当地监管要求，不得用于非法用途，也不得用于绕过 Quiver AI 的访问控制、风控或额度限制。
