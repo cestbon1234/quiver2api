@@ -1,0 +1,21 @@
+node_modules/
+
+# Local secrets and runtime state
+.env
+.env.*
+!.env.example
+accounts.db
+*.db
+*.db-shm
+*.db-wal
+
+# Logs and temporary output
+logs/
+.quiver-webscan/
+.tmp-quiver-chunks/
+debug-step*.png
+npm-debug.log*
+
+# OS/editor noise
+.DS_Store
+Thumbs.db

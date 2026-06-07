@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiver2API Admin</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #ffffff;
+      --side: #f7f7f8;
+      --panel: #ffffff;
+      --line: #e5e7eb;
+      --text: #202123;
+      --muted: #6b7280;
+      --soft: #f3f4f6;
+      --primary: #10a37f;
+      --primary-strong: #0d8f6f;
+      --ok: #0f8f68;
+      --warn: #b45309;
+      --bad: #d93025;
+      --ink: #111827;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 13px/1.45 ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      letter-spacing: 0;
+    }
+    button, input, textarea, select { font: inherit; letter-spacing: 0; }
+    .admin-app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 278px minmax(0, 1fr);
+      background: var(--bg);
+    }
+    .admin-sidebar {
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      background: var(--side);
+      border-right: 1px solid var(--line);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow: auto;
+    }
+    .side-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 4px 12px;
+    }
+    .side-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: #202123;
+      color: #fff;
+      font-weight: 700;
+    }
+    .side-brand strong { display: block; font-size: 15px; }
+    .side-brand span { display: block; color: var(--muted); font-size: 12px; margin-top: 1px; }
+    .side-nav { display: grid; gap: 6px; }
+    .side-link {
+      min-height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      color: var(--text);
+      padding: 8px 10px;
+      text-decoration: none;
+    }
+    .side-link:hover, .side-link.active {
+      background: #fff;
+      border-color: var(--line);
+    }
+    .side-note {
+      margin-top: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .shell {
+      max-width: none;
+      margin: 0;
+      padding: 18px 22px 28px;
+      min-width: 0;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      min-height: 58px;
+      margin: -18px -22px 16px;
+      padding: 0 22px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, .94);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+    .brand h1 { margin: 0; font-size: 17px; }
+    .brand p { margin: 4px 0 0; color: var(--muted); }
+    .nav, .toolbar, .row-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--text);
+      padding: 7px 11px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    .btn:hover { background: #f9fafb; border-color: #d1d5db; }
+    .btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .btn.primary:hover { background: var(--primary-strong); }
+    .btn.danger { color: #991b1b; border-color: #fecaca; background: #fff7f7; }
+    .btn.small { min-height: 28px; padding: 4px 8px; font-size: 12px; }
+    .btn:disabled { cursor: not-allowed; opacity: .58; }
+    .input, .textarea, .select {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text);
+      min-height: 36px;
+      padding: 8px 10px;
+    }
+    .textarea { min-height: 112px; resize: vertical; }
+    .input:focus, .textarea:focus, .select:focus {
+      outline: 2px solid rgba(16, 163, 127, .16);
+      border-color: var(--primary);
+    }
+    .field { display: grid; gap: 6px; margin-bottom: 11px; }
+    .field label { color: #475569; font-size: 12px; }
+    .status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--warn);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+    }
+    .status.ready { border-left-color: var(--ok); }
+    .status.bad { border-left-color: var(--bad); }
+    .status strong { display: block; font-size: 14px; }
+    .status span { display: block; color: var(--muted); margin-top: 2px; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(120px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .metric {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      min-width: 0;
+    }
+    .metric span { color: var(--muted); display: block; font-size: 12px; }
+    .metric strong { display: block; margin-top: 5px; font-size: 20px; line-height: 1.1; }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 390px;
+      gap: 14px;
+      align-items: start;
+    }
+    .stack { display: grid; gap: 14px; }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+    .panel-head h2 { margin: 0; font-size: 15px; }
+    .panel-body { padding: 14px; }
+    .subgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .table-wrap { overflow: auto; }
+    table { border-collapse: collapse; min-width: 860px; width: 100%; }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 9px 10px;
+      text-align: left;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+    th {
+      background: #fbfbfc;
+      color: #475569;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    td.email { max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+    tr:last-child td { border-bottom: 0; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      padding: 2px 8px;
+      background: #f8fafc;
+      color: #475569;
+      font-size: 12px;
+    }
+    .badge.active { background: #ecfdf5; border-color: #bbf7d0; color: #166534; }
+    .badge.no_access { background: #fff7ed; border-color: #fed7aa; color: #9a3412; }
+    .badge.disabled, .badge.error { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+    .muted { color: var(--muted); }
+    .empty {
+      min-height: 120px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      text-align: center;
+      background: var(--soft);
+      border-radius: 8px;
+      padding: 18px;
+    }
+    .output {
+      min-height: 190px;
+      max-height: 360px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin: 0;
+      background: var(--ink);
+      color: #dbeafe;
+      border-radius: 8px;
+      padding: 12px;
+      font: 12px/1.55 Consolas, ui-monospace, monospace;
+    }
+    .log {
+      min-height: 130px;
+      max-height: 260px;
+      overflow: auto;
+      background: #fbfbfc;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px;
+      color: #334155;
+    }
+    .log-line { margin-bottom: 6px; }
+    .toast {
+      position: fixed;
+      right: 18px;
+      top: 18px;
+      z-index: 20;
+      background: #172033;
+      color: #fff;
+      border-radius: 6px;
+      padding: 10px 14px;
+      box-shadow: 0 14px 35px rgba(15, 23, 42, .22);
+    }
+    @media (max-width: 1040px) {
+      .admin-app { grid-template-columns: 1fr; }
+      .admin-sidebar {
+        height: auto;
+        position: static;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .side-note { margin-top: 0; }
+      .layout, .subgrid { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 720px) {
+      .shell { padding: 12px; }
+      .topbar, .status { align-items: stretch; flex-direction: column; }
+      .stats { grid-template-columns: 1fr; }
+      .panel-head { align-items: stretch; flex-direction: column; }
+      .nav, .toolbar, .row-actions { align-items: stretch; }
+      .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-app">
+    <aside class="admin-sidebar">
+      <div class="side-brand">
+        <div class="side-mark">Q</div>
+        <div>
+          <strong>Quiver2API</strong>
+          <span>Admin console</span>
+        </div>
+      </div>
+      <nav class="side-nav">
+        <a class="side-link" href="/"><span>SVG 生成</span><span>/</span></a>
+        <a class="side-link active" href="/admin"><span>后台管理</span><span>/admin</span></a>
+        <a class="side-link" href="/quiver2api-export.user.js"><span>导入脚本</span><span>.user.js</span></a>
+      </nav>
+      <div class="side-note">
+        在这里维护 Quiver 网页账号池；访客页只负责调用 /v1/svgs/generations、/v1/svgs/vectorizations 并展示 SVG。
+      </div>
+    </aside>
+
+    <main class="shell">
+      <header class="topbar">
+        <div class="brand">
+          <h1>Quiver2API 管理后台</h1>
+          <p>管理网页账号池、额度状态、本地密钥和导入流程</p>
+        </div>
+        <nav class="nav">
+          <a class="btn" href="/">访客生成页</a>
+          <a class="btn" href="/quiver2api-export.user.js">导入脚本</a>
+          <button class="btn primary" id="refresh-all" type="button">刷新后台</button>
+        </nav>
+      </header>
+
+      <section class="status" id="service-status">
+        <div>
+          <strong id="status-title">正在读取服务状态</strong>
+          <span id="status-message">请稍候...</span>
+        </div>
+        <div class="field" style="margin: 0; min-width: 230px;">
+          <label for="status-api-key">本地 API Key</label>
+          <input class="input" id="status-api-key" type="password" autocomplete="off" placeholder="未配置可留空">
+        </div>
+      </section>
+
+      <section class="stats" aria-label="服务指标">
+        <div class="metric"><span>总账号</span><strong id="metric-total">0</strong></div>
+        <div class="metric"><span>可用账号</span><strong id="metric-active">0</strong></div>
+        <div class="metric"><span>无额度或权限</span><strong id="metric-no-access">0</strong></div>
+        <div class="metric"><span>已禁用</span><strong id="metric-disabled">0</strong></div>
+        <div class="metric"><span>网页额度</span><strong id="metric-credits">0</strong></div>
+      </section>
+
+      <section class="layout">
+        <div class="stack">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>账号池</h2>
+              <div class="toolbar">
+                <button class="btn small" id="refresh-status" type="button">刷新 /v1 状态</button>
+                <button class="btn small" id="refresh-balances" type="button">刷新全部余额</button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>账号</th>
+                    <th>状态</th>
+                    <th>额度</th>
+                    <th>Session</th>
+                    <th>错误</th>
+                    <th>上次使用</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="accounts-body">
+                  <tr><td colspan="7"><div class="empty">正在加载账号...</div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>操作结果</h2>
+              <span class="muted" id="output-title">等待操作</span>
+            </div>
+            <div class="panel-body">
+              <pre class="output" id="output">{}</pre>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>自动注册</h2>
+              <div class="toolbar">
+                <button class="btn small" id="connect-log" type="button">连接日志</button>
+                <button class="btn small" id="register-one" type="button">注册 1 个</button>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="subgrid">
+                <div class="field">
+                  <label for="register-count">批量数量</label>
+                  <input class="input" id="register-count" type="number" min="1" max="5" value="3">
+                </div>
+                <div class="field">
+                  <label for="register-delay">间隔毫秒</label>
+                  <input class="input" id="register-delay" type="number" min="5000" value="8000">
+                </div>
+              </div>
+              <div class="toolbar">
+                <button class="btn" id="register-batch" type="button">启动批量注册</button>
+                <span class="muted">注册后仍会按 Quiver 实际 Create 权限判断是否可用。</span>
+              </div>
+              <div class="log" id="register-log" style="margin-top: 12px;">
+                <div class="log-line muted">尚未连接日志。</div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <aside class="stack">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>导入网页 Session</h2>
+              <span class="muted">/api/accounts/import-web</span>
+            </div>
+            <div class="panel-body">
+              <form id="import-form">
+                <div class="field">
+                  <label for="import-email">账号邮箱，可选</label>
+                  <input class="input" id="import-email" type="email" autocomplete="off" placeholder="留空时从 Quiver session 读取">
+                </div>
+                <div class="field">
+                  <label for="import-cookies">Quiver Cookie</label>
+                  <textarea class="textarea" id="import-cookies" required spellcheck="false" placeholder="nuxt-session=..."></textarea>
+                </div>
+                <div class="toolbar">
+                  <button class="btn primary" type="submit">验证并导入</button>
+                  <button class="btn" id="diagnose-cookie" type="button">只诊断 Cookie</button>
+                </div>
+              </form>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Magic 登录导入</h2>
+              <span class="muted">邮箱验证码</span>
+            </div>
+            <div class="panel-body">
+              <form id="magic-form">
+                <div class="field">
+                  <label for="magic-email">账号邮箱</label>
+                  <input class="input" id="magic-email" type="email" required autocomplete="off" placeholder="user@example.com">
+                </div>
+                <div class="subgrid">
+                  <div class="field">
+                    <label for="magic-intent">模式</label>
+                    <select class="select" id="magic-intent">
+                      <option value="signin">登录</option>
+                      <option value="signup">注册</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="magic-code">验证码</label>
+                    <input class="input" id="magic-code" inputmode="numeric" maxlength="6" placeholder="6 位数字">
+                  </div>
+                </div>
+                <div class="toolbar">
+                  <button class="btn" id="send-code" type="button">发送验证码</button>
+                  <button class="btn primary" id="verify-code" type="submit">验证并保存</button>
+                </div>
+              </form>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>配置</h2>
+              <span class="muted">/api/config</span>
+            </div>
+            <div class="panel-body">
+              <div class="field">
+                <label for="config-local-api-key">本地 /v1 API Key</label>
+                <input class="input" id="config-local-api-key" type="password" autocomplete="off">
+              </div>
+              <div class="field">
+                <label for="config-yyds-api-key">YYDS API Key</label>
+                <input class="input" id="config-yyds-api-key" type="password" autocomplete="off">
+              </div>
+              <div class="field">
+                <label for="config-proxy-url">代理 URL</label>
+                <input class="input" id="config-proxy-url" autocomplete="off" placeholder="http://127.0.0.1:7890">
+              </div>
+              <div class="field">
+                <label for="config-quiver-api-key">Quiver 官方 API Key</label>
+                <input class="input" id="config-quiver-api-key" type="password" autocomplete="off">
+              </div>
+              <div class="subgrid">
+                <div class="field">
+                  <label for="config-clear-key">清空配置项</label>
+                  <select class="select" id="config-clear-key">
+                    <option value="local_api_key">本地 /v1 API Key</option>
+                    <option value="yyds_api_key">YYDS API Key</option>
+                    <option value="proxy_url">代理 URL</option>
+                    <option value="quiver_api_key">Quiver 官方 API Key</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>&nbsp;</label>
+                  <button class="btn danger" id="clear-config" type="button">清空所选</button>
+                </div>
+              </div>
+              <div class="toolbar">
+                <button class="btn primary" id="save-config" type="button">保存非空设置</button>
+                <button class="btn" id="reload-config" type="button">重新读取</button>
+              </div>
+            </div>
+          </section>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const state = {
+      accounts: [],
+      eventSource: null
+    };
+
+    const configFields = {
+      local_api_key: 'config-local-api-key',
+      yyds_api_key: 'config-yyds-api-key',
+      proxy_url: 'config-proxy-url',
+      quiver_api_key: 'config-quiver-api-key'
+    };
+
+    function toast(message) {
+      const item = document.createElement('div');
+      item.className = 'toast';
+      item.textContent = message;
+      document.body.appendChild(item);
+      setTimeout(() => item.remove(), 2600);
+    }
+
+    function localApiKey() {
+      const fromField = $('status-api-key').value.trim();
+      const saved = localStorage.getItem('quiver2api:localApiKey') || '';
+      const key = fromField || saved;
+      if (fromField) localStorage.setItem('quiver2api:localApiKey', fromField);
+      return key;
+    }
+
+    function v1Headers() {
+      const key = localApiKey();
+      return key ? { Authorization: `Bearer ${key}` } : {};
+    }
+
+    async function jsonFetch(url, options = {}) {
+      const headers = {
+        ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+        ...(options.headers || {})
+      };
+      const response = await fetch(url, { ...options, headers });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.success === false) {
+        const message = data.error?.message || data.error || `HTTP ${response.status}`;
+        throw new Error(message);
+      }
+      return data;
+    }
+
+    function showOutput(title, data) {
+      $('output-title').textContent = title;
+      $('output').textContent = JSON.stringify(data, null, 2);
+    }
+
+    function setBusy(button, busyText) {
+      const oldText = button.textContent;
+      button.disabled = true;
+      button.textContent = busyText;
+      return () => {
+        button.disabled = false;
+        button.textContent = oldText;
+      };
+    }
+
+    function setMetric(id, value) {
+      $(id).textContent = value ?? 0;
+    }
+
+    function statusBadge(status) {
+      const badge = document.createElement('span');
+      badge.className = `badge ${status || ''}`;
+      badge.textContent = status || 'unknown';
+      return badge;
+    }
+
+    function accountUrl(email) {
+      return encodeURIComponent(email);
+    }
+
+    function formatDate(value) {
+      if (!value) return '-';
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString();
+    }
+
+    function appendCell(row, value, className = '') {
+      const cell = document.createElement('td');
+      if (className) cell.className = className;
+      if (value instanceof Node) cell.appendChild(value);
+      else cell.textContent = value;
+      row.appendChild(cell);
+      return cell;
+    }
+
+    function actionButton(label, handler, className = '') {
+      const button = document.createElement('button');
+      button.className = `btn small ${className}`.trim();
+      button.type = 'button';
+      button.textContent = label;
+      button.addEventListener('click', handler);
+      return button;
+    }
+
+    async function runAccountAction(email, action, button) {
+      const restore = setBusy(button, '执行中');
+      try {
+        let result;
+        if (action === 'balance') {
+          result = await jsonFetch(`/api/balance?email=${encodeURIComponent(email)}`);
+        } else if (action === 'access') {
+          result = await jsonFetch(`/api/access?email=${encodeURIComponent(email)}`);
+        } else if (action === 'diagnose') {
+          result = await jsonFetch(`/api/accounts/${accountUrl(email)}/diagnose`);
+        } else if (action === 'reset') {
+          result = await jsonFetch(`/api/accounts/${accountUrl(email)}/reset`, { method: 'POST' });
+        } else if (action === 'disable') {
+          result = await jsonFetch(`/api/accounts/${accountUrl(email)}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status: 'disabled' })
+          });
+        } else if (action === 'enable') {
+          result = await jsonFetch(`/api/accounts/${accountUrl(email)}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status: 'active' })
+          });
+        } else if (action === 'delete') {
+          if (!confirm(`删除账号 ${email}？`)) return;
+          result = await jsonFetch(`/api/accounts/${accountUrl(email)}`, { method: 'DELETE' });
+        }
+        showOutput(`${email} / ${action}`, result);
+        await refreshDashboard(false);
+      } catch (error) {
+        toast(error.message);
+        showOutput(`${email} / ${action} failed`, { error: error.message });
+      } finally {
+        restore();
+      }
+    }
+
+    function renderAccounts(accounts) {
+      const body = $('accounts-body');
+      body.innerHTML = '';
+      if (!accounts.length) {
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.colSpan = 7;
+        cell.innerHTML = '<div class="empty">还没有导入网页账号。</div>';
+        row.appendChild(cell);
+        body.appendChild(row);
+        return;
+      }
+
+      accounts.forEach((account) => {
+        const row = document.createElement('tr');
+        appendCell(row, account.email, 'email');
+        appendCell(row, statusBadge(account.status));
+        appendCell(row, account.credits ?? 0);
+        appendCell(row, account.has_session ? '已导入' : '无');
+        appendCell(row, account.error_count ?? 0);
+        appendCell(row, formatDate(account.last_used_at));
+
+        const actions = document.createElement('div');
+        actions.className = 'row-actions';
+        actions.appendChild(actionButton('余额', (event) => runAccountAction(account.email, 'balance', event.currentTarget)));
+        actions.appendChild(actionButton('权限', (event) => runAccountAction(account.email, 'access', event.currentTarget)));
+        actions.appendChild(actionButton('诊断', (event) => runAccountAction(account.email, 'diagnose', event.currentTarget)));
+        actions.appendChild(actionButton('重置', (event) => runAccountAction(account.email, 'reset', event.currentTarget)));
+        actions.appendChild(actionButton(
+          account.status === 'disabled' ? '启用' : '禁用',
+          (event) => runAccountAction(account.email, account.status === 'disabled' ? 'enable' : 'disable', event.currentTarget)
+        ));
+        actions.appendChild(actionButton('删除', (event) => runAccountAction(account.email, 'delete', event.currentTarget), 'danger'));
+        appendCell(row, actions);
+        body.appendChild(row);
+      });
+    }
+
+    async function loadAccounts() {
+      const result = await jsonFetch('/api/accounts');
+      state.accounts = result.data || [];
+      renderAccounts(state.accounts);
+      return state.accounts;
+    }
+
+    async function loadStats() {
+      const result = await jsonFetch('/api/stats');
+      const stats = result.data || {};
+      setMetric('metric-total', stats.total);
+      setMetric('metric-active', stats.active);
+      setMetric('metric-no-access', stats.no_access);
+      setMetric('metric-disabled', stats.disabled);
+      setMetric('metric-credits', stats.credits);
+      return stats;
+    }
+
+    async function loadV1Status(force = false) {
+      const box = $('service-status');
+      const title = $('status-title');
+      const message = $('status-message');
+      try {
+        const status = await jsonFetch(`/v1/status${force ? '?refresh=true' : ''}`, {
+          headers: v1Headers()
+        });
+        box.className = `status ${status.ready ? 'ready' : ''}`;
+        title.textContent = status.ready
+          ? `API 可用：${status.active_accounts} 个网页账号可生成`
+          : 'API 暂不可生成';
+        message.textContent = status.ready
+          ? '账号池已经准备好，访客页和 /v1 接口都可以生成 SVG。'
+          : status.session_accounts
+            ? '已有网页账号，但当前没有可用 Create 额度或权限。'
+            : '还没有导入可用的 Quiver 网页账号。';
+        setMetric('metric-total', status.total_accounts);
+        setMetric('metric-active', status.active_accounts);
+        setMetric('metric-no-access', status.no_access_accounts);
+        setMetric('metric-disabled', status.disabled_accounts);
+        setMetric('metric-credits', status.total_credits);
+        return status;
+      } catch (error) {
+        box.className = 'status bad';
+        title.textContent = '无法读取 /v1/status';
+        message.textContent = error.message;
+        return { error: error.message };
+      }
+    }
+
+    async function loadConfig() {
+      const result = await jsonFetch('/api/config');
+      const config = result.data || {};
+      const masked = {
+        local_api_key: config.local_api_key_masked,
+        yyds_api_key: config.yyds_api_key_masked,
+        proxy_url: config.proxy_url_masked,
+        quiver_api_key: config.quiver_api_key_masked
+      };
+      Object.entries(configFields).forEach(([key, id]) => {
+        const input = $(id);
+        input.value = '';
+        input.placeholder = masked[key] ? `已配置：${masked[key]}` : '未配置';
+      });
+      return config;
+    }
+
+    async function refreshDashboard(forceStatus = false) {
+      const [status, accounts, stats, config] = await Promise.allSettled([
+        loadV1Status(forceStatus),
+        loadAccounts(),
+        loadStats(),
+        loadConfig()
+      ]);
+      const result = {
+        status: status.status === 'fulfilled' ? status.value : status.reason.message,
+        accounts: accounts.status === 'fulfilled' ? accounts.value.length : accounts.reason.message,
+        stats: stats.status === 'fulfilled' ? stats.value : stats.reason.message,
+        config: config.status === 'fulfilled' ? 'loaded' : config.reason.message
+      };
+      showOutput('dashboard refresh', result);
+      return result;
+    }
+
+    async function refreshAllBalances(button) {
+      const restore = setBusy(button, '刷新中');
+      try {
+        const result = await jsonFetch('/api/balance/all');
+        showOutput('balance/all', result);
+        await refreshDashboard(false);
+      } catch (error) {
+        toast(error.message);
+        showOutput('balance/all failed', { error: error.message });
+      } finally {
+        restore();
+      }
+    }
+
+    async function saveConfig(button) {
+      const restore = setBusy(button, '保存中');
+      try {
+        const entries = Object.entries(configFields)
+          .map(([key, id]) => [key, $(id).value.trim()])
+          .filter(([, value]) => value !== '');
+        if (!entries.length) {
+          toast('没有需要保存的非空设置');
+          return;
+        }
+        const results = [];
+        for (const [key, value] of entries) {
+          results.push(await jsonFetch('/api/config', {
+            method: 'POST',
+            body: JSON.stringify({ key, value })
+          }));
+          if (key === 'local_api_key') {
+            localStorage.setItem('quiver2api:localApiKey', value);
+            $('status-api-key').value = value;
+          }
+        }
+        showOutput('config saved', results);
+        await loadConfig();
+        await loadV1Status(false);
+        toast('配置已保存');
+      } catch (error) {
+        toast(error.message);
+        showOutput('config failed', { error: error.message });
+      } finally {
+        restore();
+      }
+    }
+
+    async function clearConfig(button) {
+      const key = $('config-clear-key').value;
+      if (!confirm(`清空 ${key}？`)) return;
+      const restore = setBusy(button, '清空中');
+      try {
+        const result = await jsonFetch('/api/config', {
+          method: 'POST',
+          body: JSON.stringify({ key, value: '' })
+        });
+        if (key === 'local_api_key') localStorage.removeItem('quiver2api:localApiKey');
+        showOutput('config cleared', { key, result });
+        await loadConfig();
+        await loadV1Status(false);
+      } catch (error) {
+        toast(error.message);
+        showOutput('config clear failed', { error: error.message });
+      } finally {
+        restore();
+      }
+    }
+
+    async function importCookie(event) {
+      event.preventDefault();
+      const button = event.submitter || event.currentTarget.querySelector('button[type="submit"]');
+      const restore = setBusy(button, '导入中');
+      try {
+        const body = {
+          email: $('import-email').value.trim(),
+          cookies: $('import-cookies').value.trim()
+        };
+        const result = await jsonFetch('/api/accounts/import-web', {
+          method: 'POST',
+          body: JSON.stringify(body)
+        });
+        $('import-cookies').value = '';
+        showOutput('import-web', result);
+        await refreshDashboard(true);
+        toast(result.message || '账号已导入');
+      } catch (error) {
+        toast(error.message);
+        showOutput('import-web failed', { error: error.message });
+      } finally {
+        restore();
+      }
+    }
+
+    async function diagnoseCookie(button) {
+      const cookies = $('import-cookies').value.trim();
+      if (!cookies) {
+        toast('请先粘贴 Quiver Cookie');
+        return;
+      }
+      const restore = setBusy(button, '诊断中');
+      try {
+        const result = await jsonFetch('/api/accounts/diagnose-web', {
+          method: 'POST',
+          body: JSON.stringify({
+            email: $('import-email').value.trim(),
+            cookies
+          })
+        });
+        showOutput('diagnose-web', result);
+      } catch (error) {
+        toast(error.message);
+        showOutput('diagnose-web failed', { error: error.message });
+      } finally {
+        restore();
+      }
+    }
+
+    async function sendMagicCode(button) {
+      const email = $('magic-email').value.trim();
+      if (!email) {
+        toast('请填写邮箱');
+        return;
+      }
+      const restore = setBusy(button, '发送中');
+      try {
+        const result = await jsonFetch('/api/auth/magic', {
+          method: 'POST',
+          body: JSON.stringify({
+            email,
+            intent: $('magic-intent').value
+          })
+        });
+        showOutput('magic sent', result);
+        toast(result.message || '验证码已发送');
+      } catch (error) {
+        toast(error.message);
+        showOutput('magic send failed', { error: error.message });
+      } finally {
+        restore();
+      }
+    }
+
+    async function verifyMagic(event) {
+      event.preventDefault();
+      const button = $('verify-code');
+      const restore = setBusy(button, '验证中');
+      try {
+        const result = await jsonFetch('/api/auth/magic/verify', {
+          method: 'POST',
+          body: JSON.stringify({
+            email: $('magic-email').value.trim(),
+            code: $('magic-code').value.trim()
+          })
+        });
+        $('magic-code').value = '';
+        showOutput('magic verify', result);
+        await refreshDashboard(true);
+        toast(result.message || '账号已保存');
+      } catch (error) {
+        toast(error.message);
+        showOutput('magic verify failed', { error: error.message });
+      } finally {
+        restore();
+      }
+    }
+
+    function appendLog(message, type = 'info') {
+      const log = $('register-log');
+      if (log.querySelector('.muted')) log.innerHTML = '';
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${type}: ${message}`;
+      log.appendChild(line);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function connectRegisterLog() {
+      if (state.eventSource) state.eventSource.close();
+      const source = new EventSource('/api/register/log');
+      state.eventSource = source;
+      $('register-log').innerHTML = '';
+      appendLog('日志已连接', 'info');
+      source.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          appendLog(data.message, data.type || 'info');
+        } catch {
+          appendLog(event.data, 'info');
+        }
+      };
+      source.onerror = () => appendLog('日志连接异常，稍后可重新连接', 'error');
+    }
+
+    async function startRegister(button, batch = false) {
+      const restore = setBusy(button, '启动中');
+      try {
+        const body = batch
+          ? {
+            count: Number($('register-count').value || 1),
+            delay: Number($('register-delay').value || 8000)
+          }
+          : {};
+        const result = await jsonFetch(batch ? '/api/register/batch' : '/api/register', {
+          method: 'POST',
+          body: JSON.stringify(body)
+        });
+        showOutput(batch ? 'register batch' : 'register one', result);
+        appendLog(result.message || '注册任务已启动', 'info');
+        toast(result.message || '注册任务已启动');
+        setTimeout(() => refreshDashboard(true).catch(() => {}), batch ? 3000 : 1200);
+      } catch (error) {
+        toast(error.message);
+        showOutput('register failed', { error: error.message });
+      } finally {
+        restore();
+      }
+    }
+
+    $('refresh-all').addEventListener('click', (event) => {
+      const restore = setBusy(event.currentTarget, '刷新中');
+      refreshDashboard(true).finally(restore);
+    });
+    $('refresh-status').addEventListener('click', () => loadV1Status(true).then((data) => showOutput('v1/status', data)));
+    $('refresh-balances').addEventListener('click', (event) => refreshAllBalances(event.currentTarget));
+    $('save-config').addEventListener('click', (event) => saveConfig(event.currentTarget));
+    $('reload-config').addEventListener('click', () => loadConfig().then((data) => showOutput('config', data)));
+    $('clear-config').addEventListener('click', (event) => clearConfig(event.currentTarget));
+    $('import-form').addEventListener('submit', importCookie);
+    $('diagnose-cookie').addEventListener('click', (event) => diagnoseCookie(event.currentTarget));
+    $('send-code').addEventListener('click', (event) => sendMagicCode(event.currentTarget));
+    $('magic-form').addEventListener('submit', verifyMagic);
+    $('connect-log').addEventListener('click', connectRegisterLog);
+    $('register-one').addEventListener('click', (event) => startRegister(event.currentTarget, false));
+    $('register-batch').addEventListener('click', (event) => startRegister(event.currentTarget, true));
+    $('status-api-key').addEventListener('change', () => {
+      const key = $('status-api-key').value.trim();
+      if (key) localStorage.setItem('quiver2api:localApiKey', key);
+      loadV1Status(false).then((data) => showOutput('v1/status', data));
+    });
+
+    $('status-api-key').value = localStorage.getItem('quiver2api:localApiKey') || '';
+    refreshDashboard(false);
+  </script>
+</body>
+</html>
