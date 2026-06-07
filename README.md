@@ -4,6 +4,13 @@
 
 Local account-pool proxy for QuiverAI.
 
+## Disclaimer
+
+This project is provided for learning and research purposes only. Users must
+comply with Quiver AI's Terms of Service, applicable laws, and local regulations
+when using this project. Do not use this project for illegal, abusive, or
+unauthorized purposes.
+
 ## What Was Reversed
 
 The current Quiver web app is a Nuxt SPA. Its public frontend bundle shows these active endpoints:
